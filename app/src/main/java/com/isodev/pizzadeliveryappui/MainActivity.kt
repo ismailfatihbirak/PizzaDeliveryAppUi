@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
@@ -30,8 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
@@ -149,13 +155,6 @@ fun MainScreen(modifier: Modifier) {
             )
         )
         Image(
-            painterResource(R.drawable.elips2),
-            contentDescription = "",
-            modifier = Modifier.align(
-                Alignment.BottomCenter
-            )
-        )
-        Image(
             painterResource(R.drawable.direction),
             contentDescription = "",
             modifier = Modifier
@@ -164,7 +163,33 @@ fun MainScreen(modifier: Modifier) {
                 )
                 .offset(y = -25.dp)
         )
-        CurvedScrollView(5) { index ->
+        val scrollState = rememberScrollState()
+        val scrollOffset = scrollState.value
+        val rotationAngle = scrollOffset / 100f * 36f
+        Canvas(modifier = Modifier
+            .size(200.dp)
+            .align(Alignment.BottomCenter)
+            .offset(y = 155.dp)) {
+            val gradientBrush = Brush.linearGradient(
+                colors = listOf(Color(0xFFFF7A7A), Color(0xFFFFC8C8)),
+                start = Offset(0f, 0f),
+                end = Offset(size.width, size.height)
+            )
+            val dashEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 40f), 0f)
+            drawArc(
+                brush = gradientBrush,
+                startAngle = rotationAngle,
+                sweepAngle = 359f,
+                useCenter = false,
+                style = Stroke(
+                    width = 8.dp.toPx(),
+                    pathEffect = dashEffect,
+                    cap = StrokeCap.Round
+                )
+            )
+        }
+
+        CurvedScrollView(5, scrollState = scrollState) { index ->
             Image(
                 painter = painterResource(
                     id = when (index) {
@@ -190,9 +215,9 @@ fun MainScreen(modifier: Modifier) {
 @Composable
 fun CurvedScrollView(
     itemCount: Int,
-    item: @Composable (Int) -> Unit
+    scrollState: ScrollState,
+    item: @Composable (Int) -> Unit,
 ) {
-    val scrollState = rememberScrollState()
     var size = remember { mutableStateOf(IntSize.Zero) }
     val scope = rememberCoroutineScope()
     val indices = remember { IntArray(itemCount) { 0 } }
